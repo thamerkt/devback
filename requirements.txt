@@ -1,0 +1,35 @@
+# Django core
+Django>=4.2
+
+# GraphQL
+graphene-django>=3.2
+graphql-core>=3.2
+django-filter>=23.0
+
+
+psycopg2-binary
+# Shopify API integration
+requests>=2.31
+
+
+# WebSockets / real-time chat
+channels>=4.1
+channels-redis>=4.1   # if using Redis as channel layer
+
+# Environment & config
+python-dotenv>=1.0
+
+# CORS (if frontend separate)
+django-cors-headers>=4.0
+
+# Static files for production
+whitenoise>=6.5
+
+# Production WSGI/ASGI server
+gunicorn>=21.2
+daphne>=4.1   # ASGI server for Django Channels
+
+# AI / NLP (optional, if you want AI models locally)
+openai>=1.1.0    # if using OpenAI API for AI chat
+transformers>=4.40  # optional for local AI models
+torch>=2.1        # if using transformers locally
