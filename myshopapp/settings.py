@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load environment variables from .env file
-load_dotenv(BASE_DIR / '.env')
+load_dotenv(BASE_DIR / '.env', override=True)
 
 
 # Quick-start development settings - unsuitable for production
@@ -30,7 +30,28 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key-for-dev')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = ['*']
+
+# Proxy settings for correct absolute URI generation (ngrok, etc.)
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Cookie settings for embedded apps (required for iframes)
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = True
+
+# Allow framing by Shopify
+X_FRAME_OPTIONS = 'ALLOWALL'
+XS_SHARING_ALLOWED_ORIGINS = ['*']
+CORS_ALLOW_ALL_ORIGINS = True
+
+# CSRF Trusted Origins for ngrok (common in dev)
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.ngrok-free.app',
+    'https://*.ngrok.io',
+]
 
 
 # Application definition
@@ -45,8 +66,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'channels',
     'graphene_django',
+    'rest_framework',
     'chat',
     'corsheaders',
+    'authentication',
 ]
 
 MIDDLEWARE = [
@@ -157,8 +180,9 @@ STATIC_URL = 'static/'
 CORS_ALLOW_ALL_ORIGINS = True # For development only
 
 # n8n Integration
-N8N_WEBHOOK_URL = os.environ.get('N8N_WEBHOOK_URL', 'http://n8n:5678/webhook-test/chat-message')
+N8N_WEBHOOK_URL = os.environ.get('N8N_WEBHOOK_URL', "http://0.0.0.0:5678/webhook-test/chat-message")
 N8N_WEBHOOK_SECRET = os.environ.get('N8N_WEBHOOK_SECRET', 'password_replace_me')
+N8N_ACTION_WEBHOOK_URL = os.environ.get('N8N_WEBHOOK_URL', "http://0.0.0.0:5678/webhook-test/chat-message")
 
 # Django REST Framework
 REST_FRAMEWORK = {
@@ -187,3 +211,12 @@ STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET',None)
 
 # Front-end URLs for payment redirection
 SITE_URL = os.environ.get('SITE_URL', 'http://localhost:3000') # Adjust to your Remix app URL
+
+# Shopify Configuration
+SHOPIFY_API_KEY = os.environ.get('SHOPIFY_API_KEY')
+SHOPIFY_API_SECRET = os.environ.get('SHOPIFY_API_SECRET')
+SHOPIFY_SCOPES = os.environ.get(
+    'SHOPIFY_SCOPES',
+    'read_customers,read_locations,read_orders,read_all_orders,read_products,read_inventory,read_analytics,read_content,read_price_rules,read_discounts,write_products,write_orders,write_payments'
+)
+SHOPIFY_APP_URL = os.environ.get('SHOPIFY_APP_URL', 'https://brother-immediate-discussed-mobiles.trycloudflare.com')

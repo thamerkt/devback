@@ -10,11 +10,17 @@ django-filter>=23.0
 psycopg2-binary
 # Shopify API integration
 requests>=2.31
+PyJWT>=2.8
+
+# Django REST Framework
+djangorestframework>=3.14
+djangorestframework-simplejwt>=5.3
 
 
 # WebSockets / real-time chat
 channels>=4.1
 channels-redis>=4.1   # if using Redis as channel layer
+aiohttp>=3.9           # async HTTP client for n8n webhook calls
 
 # Environment & config
 python-dotenv>=1.0

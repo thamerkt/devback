@@ -31,12 +31,31 @@ class TestN8nParsing(unittest.TestCase):
 
     def test_plain_text(self):
         input_data = "Just a string"
-        with self.assertRaises(json.JSONDecodeError):
-            parse_n8n_response(input_data)
+        expected = [{"message": "Just a string", "type": "written"}]
+        self.assertEqual(parse_n8n_response(input_data), expected)
+
+    def test_python_repr(self):
+        # Test single-quoted string (Python representation)
+        input_data = "[{'message': 'Hello there!', 'type': 'written'}]"
+        expected = [{"message": "Hello there!", "type": "written"}]
+        self.assertEqual(parse_n8n_response(input_data), expected)
 
     def test_empty_list(self):
         input_data = "[]"
         expected = []
+        self.assertEqual(parse_n8n_response(input_data), expected)
+
+    def test_nested_output_format(self):
+        # The format reported by the user
+        input_data = json.dumps([
+            {
+                "output": {
+                    "message": "Hey there! 👋 Browsing our collection?",
+                    "type": "written"
+                }
+            }
+        ])
+        expected = [{"message": "Hey there! 👋 Browsing our collection?", "type": "written"}]
         self.assertEqual(parse_n8n_response(input_data), expected)
 
 if __name__ == '__main__':

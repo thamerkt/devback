@@ -2,32 +2,17 @@ import json
 import ast
 
 def parse_n8n_response(content):
-    """
-    Parses n8n raw response into a standardized list of message dicts.
-    Supports:
-    - Simple text messages
-    - Nested content (products, pages, categories)
-    - Non-JSON or 'json ' prefixed strings
-    - Python repr strings (single quotes)
-    Returns a list of dicts: [{"message": "...", "type": "...", "content": [...]}, ...]
-    """
     if not isinstance(content, str):
         content = str(content)
-
-    # Remove leading 'json ' if present
     if content.lower().startswith("json "):
         content = content[5:]
-
     content = content.strip()
-
     try:
         data = json.loads(content)
     except json.JSONDecodeError:
         try:
-            # Fallback for Python-style strings (single quotes)
             data = ast.literal_eval(content)
         except (ValueError, SyntaxError):
-            # Non-JSON non-Python content -> wrap as a single written message
             return [{"message": content, "type": "written"}]
 
     items = data if isinstance(data, list) else [data]
@@ -37,23 +22,16 @@ def parse_n8n_response(content):
             for sub in item:
                 yield from process_item(sub)
         elif isinstance(item, dict):
-            # Wisely integrate: If the item is just a wrapper for 'output' or 'content',
-            # promote the inner content immediately.
-            if len(item) == 1:
-                if "output" in item and isinstance(item["output"], (dict, list)):
-                    yield from process_item(item["output"])
-                    return
-                if "content" in item and isinstance(item["content"], (dict, list)):
-                    yield from process_item(item["content"])
-                    return
+            # NEW: If item ONLY has 'output' and it's a dict, promote it
+            if "output" in item and len(item) == 1 and isinstance(item["output"], dict):
+                yield from process_item(item["output"])
+                return
 
             msg_type = item.get("type", "written")
             msg_text = item.get("message") or item.get("text") or ""
             
-            # Handle nested content/output within a multi-key object
             nested = item.get("content") or item.get("output")
             
-            # If main message is empty but we have a string in nested, use it as the message
             if not msg_text and isinstance(nested, str):
                 msg_text = nested
                 nested = None
@@ -73,23 +51,32 @@ def parse_n8n_response(content):
                             processed_content.extend(list(process_item(c)))
                     result["content"] = processed_content
                 elif isinstance(nested, dict):
-                    # If nested is a dict, it might be a structured response
                     if nested.get("type") in ["product", "page", "category"]:
                         result["content"] = [nested]
                     else:
-                        # Otherwise try to process it as a message
                         sub_messages = list(process_item(nested))
                         if sub_messages:
-                            # If we still have no main text, promote the first sub-message's text
                             if not result["message"] and sub_messages[0].get("message"):
                                 result["message"] = sub_messages[0]["message"]
                                 if len(sub_messages) > 1:
                                     result["content"] = sub_messages[1:]
                             else:
                                 result["content"] = sub_messages
-
             yield result
         else:
             yield {"message": str(item), "type": "written"}
 
     return list(process_item(items))
+
+# Test with user's input
+user_input = """
+[
+  {
+    "output": {
+      "message": "Hey there! 👋 Browsing our collection?",
+      "type": "written"
+    }
+  }
+]
+"""
+print("Result:", parse_n8n_response(user_input))
